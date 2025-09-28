@@ -1,8 +1,12 @@
-# 🛠 Aegis - Go Migration (Dev Branch)
+# 🛠 Aegis
 
 ## 📌 Project Overview
 Aegis is a backup system designed to support multiple backends and cloud providers.  
 The goal of this dev branch is to **migrate the legacy shell script into a modular, maintainable Go application** while preserving its interactive setup, script generation capabilities, and system portability.
+
+# Current Functionality
+- Use the Script within the Script folder, `/scripts/` is production
+- `/Aegis` (Go) is marked as in Dev
 
 The Go application will provide:
 - A fully interactive CLI (`aegis`) for initial setup and management.
