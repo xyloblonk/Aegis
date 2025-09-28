@@ -1,203 +1,150 @@
-# Aegis
+# 🛠 Aegis - Go Migration (Dev Branch)
 
-**Aegis** is a comprehensive backup automation framework for Linux servers.  
-It delivers **secure, encrypted, retention-aware, and cloud-ready** backups with minimal setup.  
+## 📌 Project Overview
+Aegis is a backup system designed to support multiple backends and cloud providers.  
+The goal of this dev branch is to **migrate the legacy shell script into a modular, maintainable Go application** while preserving its interactive setup, script generation capabilities, and system portability.
 
-Designed for **sysadmins, DevOps engineers, and hosting providers**, Aegis provides reliability, auditability, and strong security guarantees in one streamlined solution.
+The Go application will provide:
+- A fully interactive CLI (`aegis`) for initial setup and management.
+- A daemon (`aegisd`) to handle scheduled backups, monitoring, and alerts.
+- Modular, testable code organized by concern.
+- Persistent configuration using YAML.
+- Ability to generate shell scripts or execute commands directly via Go.
 
-## ✨ Features
-
-- **Interactive Guided Setup**
-  - Step-by-step wizard for providers, sources, encryption, and retention.
-  - Input validation and sensible defaults for reduced misconfiguration.
-
-- **Multi-Provider Cloud Support**
-  - Amazon S3  
-  - Backblaze B2  
-  - Google Cloud Storage  
-  - Wasabi  
-  - DigitalOcean Spaces  
-  - MinIO  
-  - FTP / FTPS  
-  - SFTP  
-
-- **Flexible Backup Sources**
-  - Files & directories (with exclusions)
-  - MySQL / MariaDB databases
-  - PostgreSQL databases
-  - Docker volumes
-  - System configuration snapshots
-
-- **Enterprise-Grade Encryption**
-  - AES-256-CBC with PBKDF2 key derivation
-  - Automatic key generation & rotation support
-  - Encrypted staging before upload
-
-- **Scheduling & Retention**
-  - Cron-based automation
-  - Configurable hourly, daily, weekly, monthly retention
-  - Automated pruning to minimize storage cost
-
-- **Comprehensive Logging**
-  - Timestamped logs per backup run
-  - Separate cron and retention logs
-  - Clear error reporting and audit trails
-
-- **Extensible Architecture**
-  - Modular scripts
-  - Easy provider extensions
-  - Supports hybrid local + cloud workflows
+## 🎯 Project Goals
+1. Convert the existing monolithic shell script into a structured Go codebase.
+2. Maintain interactive CLI and daemon functionality.
+3. Implement modular architecture:
+   - Backup backends (Borg, Restic, Traditional)
+   - Cloud providers (S3, GCS, B2, etc.)
+   - Backup jobs and scheduling
+   - Monitoring and alerts
+   - Retention policies
+4. Persist configuration using YAML for portability and maintainability.
+5. Use Go templates and execution wrappers to generate or run scripts reliably.
+6. Ensure the application is maintainable, extensible, and portable across Linux distributions.
 
 ---
 
-## 📦 Installation
+## 🛠 Tools & Libraries
+**Programming Language:** Go 1.21 (modules enabled)
 
-Clone the repository and launch the installer:
+**Core Libraries:**
+- `os`, `os/exec` – filesystem and command execution
+- `path/filepath` – directory/file operations
+- `bufio`, `fmt`, `log` – CLI input/output and logging
+- `text/template` – shell script generation
+- `encoding/json` / `gopkg.in/yaml.v3` – configuration serialization
 
-```bash
-git clone https://github.com/xyloblonk/aegis.git
-cd aegis
-sudo ./aegis.sh
-````
+**CLI / UX:**
+- `github.com/manifoldco/promptui` – interactive prompts
+- `github.com/fatih/color` – terminal colors for better UX
 
-The guided setup will configure:
+**Testing:**
+- Go’s standard `testing` package
+- Unit tests for backends, providers, and setup steps
 
-* Provider credentials
-* Backup sources
-* Encryption options
-* Scheduling & retention
+**Utilities:**
+- Custom execution wrappers in `pkg/utils/exec.go` for robust system commands
 
-## ⚙️ Configuration
+## 📁 Current Folder Structure
 
-Configuration is stored in structured directories:
-
-* **`/etc/backup-automator/`**
-
-  * Provider credentials
-  * Retention policy
-  * Encryption keys
-* **`/usr/local/bin/backup-scripts/`**
-
-  * Generated scripts (`run_backup.sh`, `upload_backup.sh`, etc.)
-* **`/var/log/backup-automator/`**
-
-  * Logs of backup jobs, pruning, and cron runs
-* **`/backups/`**
-
-  * Temporary staging of backup archives before upload
-
-You can re-run the setup at any time to adjust configuration.
-
-## 🔐 Security
-
-* All backups can be encrypted at rest with **AES-256-CBC**.
-* Encryption keys are stored under `/etc/backup-automator/encryption/key.bin` with restrictive permissions.
-* Aegis enforces:
-
-  * **Least privilege file ownership**
-  * **Secure defaults for cloud provider authentication**
-  * **Logging for audit compliance**
-
-⚠️ **Important:** If you lose the encryption key, your backups cannot be recovered. Store it securely in a password manager or hardware vault.
-
-## 🗓 Scheduling & Retention
-
-Backups are run via cron jobs:
-
-* **Backup execution:** `/etc/cron.d/backup-automator`
-* **Pruning & cleanup:** Daily at 01:00 AM
-
-Example retention policy (`/etc/backup-automator/retention.conf`):
-
-```ini
-RETAIN_HOURLY=24
-RETAIN_DAILY=7
-RETAIN_WEEKLY=4
-RETAIN_MONTHLY=12
+```
+Aegis/
+├── cmd/  
+│   ├── aegis/        # CLI entry point  
+│   └── aegisd/       # Daemon entry point  
+├── configs/          # Persistent configuration files  
+├── docs/             # Documentation, architecture diagrams  
+├── internal/         # Internal tools (installer, web)  
+│   ├── installer/  
+│   └── web/  
+├── pkg/  
+│   ├── api/  
+│   ├── backends/     # borg, restic, traditional  
+│   ├── config/       # configuration structs & YAML handling  
+│   ├── crypto/  
+│   ├── jobs/  
+│   ├── logging/  
+│   ├── monitoring/  
+│   ├── providers/    # s3, gcs, b2  
+│   ├── setup/        # setup steps: directories, dependencies, backends, providers, etc.  
+│   ├── storage/  
+│   └── utils/        # exec wrappers, helpers  
+├── scripts/          # helper shell scripts (install, migration, dev tools)  
+└── tests/            # unit and integration tests  
 ```
 
-This ensures recent backups are preserved while controlling storage growth.
+## 🛠 Planned Setup Steps (pkg/setup)
+1. **Header & Introduction** – display welcome message and instructions.  
+2. **Directory Initialization** – create all necessary directories (config, logs, scripts, temp).  
+3. **Dependency Check** – verify required binaries and packages (Borg, Restic, cloud CLI tools).  
+4. **Backend Installation** – install or verify backup backends.  
+5. **Backend Selection** – allow user to select primary backup backend.  
+6. **Backend Configuration** – configure repository paths, encryption, credentials.  
+7. **Provider Selection** – interactive selection of cloud provider.  
+8. **Provider Configuration** – credentials, buckets, endpoints.  
+9. **Backup Sources Configuration** – files, databases (MySQL, PostgreSQL), Docker volumes, system directories.  
+10. **Monitoring Setup** – configure alerting, email, or logging integration.  
+11. **Scheduling Setup** – configure cron or daemon scheduling for automated backups.  
+12. **Retention Policy** – define backup rotation, pruning rules, and retention periods.  
+13. **Script Generation** – use templates to generate main backup, upload, restore, monitoring, and cron scripts.  
+14. **Finalization** – save configuration to YAML, test backup, display setup summary.
 
-## 🚀 Usage
+Each step is implemented as a **dedicated Go function** in `pkg/setup` for modularity and testability.
 
-Trigger a manual backup job:
+## 🗺 Roadmap
+**Phase 1 – Structure & Core Setup**
+- Define `Setup` struct and `Config` struct.
+- Implement directory and dependency checks.
+- Implement modular setup steps with skeleton functions.
+- Add logging and basic CLI output.
 
-```bash
-sudo /usr/local/bin/backup-scripts/run_backup.sh default
-```
+**Phase 2 – Backends & Providers**
+- Implement Borg, Restic, Traditional backends.
+- Implement S3, GCS, B2 provider integrations.
+- Unit tests for backends and provider configurations.
 
-View logs:
+**Phase 3 – Backup Jobs & Scheduling**
+- Implement backup job definitions (`pkg/jobs`).
+- Cron job generation and daemon support (`aegisd`).
+- Implement retention policies and cleanup.
 
-```bash
-tail -f /var/log/backup-automator/backup.log
-```
+**Phase 4 – Monitoring & Alerts**
+- Setup monitoring hooks (`pkg/monitoring`).
+- Logging and alerting integration.
 
-List backups available in staging:
+**Phase 5 – Testing & Documentation**
+- Unit tests for all modules.
+- End-to-end test of setup, backup, and restore.
+- Generate professional documentation (`docs/`).
 
-```bash
-ls /backups/
-```
+**Phase 6 – Optimization & Refactoring**
+- Remove unused shell dependencies.
+- Optimize performance and error handling.
+- Prepare for stable release.
 
-## 🛠 Recovery
+## 💡 Considerations & Plans
+- Replacing shell scripts entirely with Go daemons for more control.
+- Support for multiple simultaneous backup backends.
+- Support for multiple providers per backend.
+- Web UI and API for management.
+- Integrate encryption and key management in Go rather than shell.
+- Make all paths, credentials, and options configurable through YAML.
 
-To restore from a backup:
+## 🚀 Development Guidelines
+- Branch per feature or setup step; merge into `dev` after review.
+- Follow modular architecture: each concern (setup, backend, provider, monitoring) in its own package.
+- Keep CLI interactions testable and decoupled from actual execution.
+- Use Go’s `log` package consistently for structured logging.
+- Maintain cross-distro Linux compatibility (Ubuntu, Debian, CentOS).
+- Document all changes in `docs/` and update README with new features.
 
-1. Retrieve the archive from your configured cloud provider.
-2. Decrypt (if encrypted):
+## 📌 Notes
+- Application must run as root due to `/etc`, `/var` directory writes.  
+- All shell script generation uses Go `text/template` for safety and maintainability.  
+- Interactive CLI is optional for automated setups using pre-defined YAML configuration.
 
-   ```bash
-   openssl enc -d -aes-256-cbc -in backup.tar.gz.enc -out backup.tar.gz -pass file:/etc/backup-automator/encryption/key.bin
-   ```
-3. Extract:
-
-   ```bash
-   tar -xzf backup.tar.gz -C /restore/path
-   ```
-4. Import databases or mount configs as needed.
-
-(A guided restore utility is on the roadmap.)
-
-## 📊 Roadmap
-
-* [ ] Incremental & differential backups
-* [ ] Borg/Restic backend integration
-* [ ] Restore automation script
-* [ ] Parallelized uploads for large archives
-* [ ] Alerting and monitoring hooks (Prometheus, Grafana)
-* [ ] Web UI for management and reporting
-
-## 🏗 Architecture Overview
-
-Aegis is composed of:
-
-* **Setup wizard (`aegis.sh`)**
-  Collects provider credentials, sets up configs, schedules jobs.
-
-* **Backup execution scripts**
-  Handle staging, encryption, compression, and provider uploads.
-
-* **Retention engine**
-  Applies retention policies across local staging and cloud provider storage.
-
-* **Logging system**
-  Generates structured logs for every stage of the process.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Commit changes with clear messages
-4. Submit a pull request with detailed notes
-
-Please also ensure:
-
-* Code is POSIX-compliant shell where possible
-* New features are documented in the README
-* Scripts pass linting with `shellcheck`
-
-## 📜 License
-
-Aegis is released under the **MIT License**.
-You are free to use, modify, and distribute, provided proper attribution is maintained.
+## ✅ Summary
+This dev branch is focused on **stepwise migration** from a large legacy shell script into a **well-structured Go application**.  
+The roadmap ensures modular, maintainable code while preserving all current functionality with clear paths for expansion, monitoring, and future UI/API integration.
